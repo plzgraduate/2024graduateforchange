@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>나의 초심찾기</title>
+  <style>
+    /* 기본 CSS 스타일 */
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+    .container {
+      display: none; /* 모든 뎁스 기본 숨김 */
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      width: 80%;
+      max-width: 500px;
+    }
+    .active {
+      display: block; /* 활성화된 뎁스만 보이게 */
+    }
+    h1, h2 {
+      color: #555;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .button:hover {
+      background-color: #0056b3;
+    }
+    .user-motto, .selected-song, .final-message {
+      font-weight: bold;
+      color: #444;
+      margin: 10px 0 20px;
+    }
+    .song-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .song-list li {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+    .song-list li:hover {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <!-- 1뎁스 -->
+  <div id="depth1" class="container active">
+    <h1>나의 초심찾기</h1>
+    <button class="button" onclick="showNextDepth(2)">다음</button>
+  </div>
+
+  <!-- 2뎁스 -->
+  <div id="depth2" class="container">
+    <h2>나의 초심을 떠올리며</h2>
+    <p>나의 초심을 가장 잘 나타내는 단어나, 초심의 마음가짐을 가졌던 과거의 나에게 전하고 싶은 말을 적어주세요.</p>
+    <input type="text" id="user-input" placeholder="예: 끈기 있게 나아가자">
+    <div class="user-motto" id="display-motto"></div>
+    <button class="button" onclick="showNextDepth(3)">다음</button>
+  </div>
+
+  <!-- 3뎁스 -->
+  <div id="depth3" class="container">
+    <h2>초심을 떠올리며 듣고 싶은 음악</h2>
+    <p>자신의 초심을 잘 나타내거나 인상깊은 노래를 적어주세요.</p>
+    <input type="text" id="song-search" placeholder="음악 제목을 입력하세요">
+    <ul id="song-list" class="song-list"></ul>
+    <div class="selected-song" id="selected-song"></div>
+    <button class="button" onclick="showNextDepth(4)">다음</button>
+  </div>
+
+  <!-- 4뎁스 -->
+  <div id="depth4" class="container">
+    <h2>내 초심을 되새기며</h2>
+    <div class="final-message" id="final-message"></div>
+    <div class="final-video" id="final-video"></div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // API 키 설정
+    const API_KEY = 'AIzaSyDMLgllFELfL14Yn1HTImOph358Su4f79A';
+
+    // 현재 활성화된 뎁스만 표시하는 함수
+    function showNextDepth(depth) {
+      document.querySelectorAll('.container').forEach(div => div.classList.remove('active'));
+      document.getElementById(`depth${depth}`).classList.add('active');
+      
+      // 4뎁스로 넘어갈 때 최종 메시지와 영상을 표시
+      if (depth === 4) {
+        const finalMessage = document.getElementById("final-message");
+        const finalVideo = document.getElementById("final-video");
+
+        // 2뎁스에서 사용자가 입력한 메시지와 3뎁스에서 선택한 유튜브 영상 자동재생
+        finalMessage.innerHTML = `<h3>당신의 초심:</h3><p>${userInput.value}</p>`;
+        finalVideo.innerHTML = selectedVideoHTML;
+      }
+    }
+
+    // 사용자 입력을 받아서 실시간으로 반영
+    const userInput = document.getElementById("user-input");
+    const displayMotto = document.getElementById("display-motto");
+
+    userInput.addEventListener("input", function() {
+      displayMotto.textContent = userInput.value;
+    });
+
+    // 유튜브 API 검색 기능
+    const songSearch = document.getElementById("song-search");
+    const songList = document.getElementById("song-list");
+    const selectedSong = document.getElementById("selected-song");
+
+    // 3뎁스에서 선택한 유튜브 영상 HTML을 저장할 변수
+    let selectedVideoHTML = '';
+
+    songSearch.addEventListener("input", function() {
+      const query = songSearch.value;
+      songList.innerHTML = ""; // 기존 목록 초기화
+
+      if (query) {
+        fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=5&q=${encodeURIComponent(query)}&type=video&key=${API_KEY}`)
+          .then(response => response.json())
+          .then(data => {
+            data.items.forEach(item => {
+              const li = document.createElement("li");
+              li.textContent = `${item.snippet.title} - ${item.snippet.channelTitle}`;
+              li.addEventListener("click", function() {
+                selectedSong.textContent = `선택된 노래: ${item.snippet.title}`;
+                
+                // 선택된 유튜브 영상의 HTML을 생성 (자동재생 기능 포함)
+                selectedVideoHTML = `
+                  <h3>선택된 노래:</h3>
+                  <iframe width="100%" height="315" src="https://www.youtube.com/embed/${item.id.videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                `;
+              });
+              songList.appendChild(li);
+            });
+          })
+          .catch(error => console.error('YouTube API 요청 실패:', error));
+      }
+    });
+  </script>
+</body>
+</html>
